@@ -98,6 +98,8 @@ type configImpl struct {
 	emptyNinjaFile bool
 
 	metricsUploader string
+
+	includeTags []string
 }
 
 const srcDirFileCheck = "build/soong/root.bp"
@@ -249,7 +251,11 @@ func NewConfig(ctx Context, args ...string) Config {
 
 	// Make sure OUT_DIR is set appropriately
 	if outDir, ok := ret.environ.Get("OUT_DIR"); ok {
-		ret.environ.Set("OUT_DIR", filepath.Clean(outDir))
+		outDir := filepath.Clean(outDir)
+		if (!filepath.IsAbs(outDir)) {
+			outDir = filepath.Join(os.Getenv("TOP"), outDir)
+		}
+		ret.environ.Set("OUT_DIR", outDir)
 	} else {
 		outDir := "out"
 		if baseDir, ok := ret.environ.Get("OUT_DIR_COMMON_BASE"); ok {
@@ -258,6 +264,8 @@ func NewConfig(ctx Context, args ...string) Config {
 			} else {
 				outDir = filepath.Join(baseDir, filepath.Base(wd))
 			}
+		} else {
+			outDir = filepath.Join(os.Getenv("TOP"), outDir)
 		}
 		ret.environ.Set("OUT_DIR", outDir)
 	}
@@ -1036,6 +1044,14 @@ func (c *configImpl) KatiArgs() []string {
 
 func (c *configImpl) Parallel() int {
 	return c.parallel
+}
+
+func (c *configImpl) GetIncludeTags() []string {
+	return c.includeTags
+}
+
+func (c *configImpl) SetIncludeTags(i []string) {
+	c.includeTags = i
 }
 
 func (c *configImpl) HighmemParallel() int {

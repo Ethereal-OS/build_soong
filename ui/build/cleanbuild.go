@@ -152,19 +152,19 @@ func installClean(ctx Context, config Config) {
 		hostOut("vts10"),
 		hostOut("vts-core"),
 		hostCommonOut("obj/PACKAGING"),
+		productOut("*.cpio"),
 		productOut("*.img"),
+		productOut("*.json"),
 		productOut("*.zip"),
-		productOut("*.zip.sha256sum"),
+		productOut("*.zip.md5sum"),
 		productOut("android-info.txt"),
 		productOut("misc_info.txt"),
 		productOut("apex"),
+		productOut("build_fingerprint.txt"),
 		productOut("kernel"),
 		productOut("kernel-*"),
-		productOut("recovery_kernel"),
 		productOut("data"),
 		productOut("skin"),
-		productOut("obj/kernel"),
-		productOut("obj/KERNEL_OBJ"),
 		productOut("obj/NOTICE_FILES"),
 		productOut("obj/PACKAGING"),
 		productOut("ramdisk"),
@@ -191,8 +191,7 @@ func installClean(ctx Context, config Config) {
 		productOut("odm_dlkm"),
 		productOut("sysloader"),
 		productOut("testcases"),
-		productOut("symbols"),
-		productOut("install"))
+		productOut("symbols"))
 }
 
 // Since products and build variants (unfortunately) shared the same

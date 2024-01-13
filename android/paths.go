@@ -1086,8 +1086,16 @@ func pathForSourceRelaxed(ctx PathContext, pathComponents ...string) (SourcePath
 	p := filepath.Join(pathComponents...)
 	ret := SourcePath{basePath{p, ""}, "."}
 
-	if strings.HasPrefix(ret.String(), ctx.Config().soongOutDir) {
-		return ret, fmt.Errorf("source path %s is in output", ret.String())
+	abs, err := filepath.Abs(ret.String())
+	if err != nil {
+		return ret, err
+	}
+	buildroot, err := filepath.Abs(ctx.Config().SoongOutDir())
+	if err != nil {
+		return ret, err
+	}
+	if strings.HasPrefix(abs, buildroot) {
+		return ret, fmt.Errorf("source path %s is in output", abs)
 	}
 
 	if pathtools.IsGlob(ret.String()) {
