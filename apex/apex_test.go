@@ -7264,28 +7264,6 @@ func TestAppSetBundlePrebuilt(t *testing.T) {
 	android.AssertStringEquals(t, "myapex input", extractorOutput, copiedApex.Input.String())
 }
 
-func TestApexSetApksModuleAssignment(t *testing.T) {
-	ctx := testApex(t, `
-		apex_set {
-			name: "myapex",
-			set: ":myapex_apks_file",
-		}
-
-		filegroup {
-			name: "myapex_apks_file",
-			srcs: ["myapex.apks"],
-		}
-	`)
-
-	m := ctx.ModuleForTests("myapex.apex.extractor", "android_common")
-
-	// Check that the extractor produces the correct apks file from the input module
-	extractorOutput := "out/soong/.intermediates/myapex.apex.extractor/android_common/extracted/myapex.apks"
-	extractedApex := m.Output(extractorOutput)
-
-	android.AssertArrayString(t, "extractor input", []string{"myapex.apks"}, extractedApex.Inputs.Strings())
-}
-
 func testNoUpdatableJarsInBootImage(t *testing.T, errmsg string, preparer android.FixturePreparer, fragments ...java.ApexVariantReference) {
 	t.Helper()
 
@@ -8274,6 +8252,30 @@ func TestApexSet(t *testing.T) {
 	if !reflect.DeepEqual(actualOverrides, expectedOverrides) {
 		t.Errorf("Incorrect LOCAL_OVERRIDES_MODULES - expected %q vs actual %q", expectedOverrides, actualOverrides)
 	}
+}
+
+func TestApexSet_NativeBridge(t *testing.T) {
+	ctx := testApex(t, `
+		apex_set {
+			name: "myapex",
+			set: "myapex.apks",
+			filename: "foo_v2.apex",
+			overrides: ["foo"],
+		}
+	`,
+		android.FixtureModifyConfig(func(config android.Config) {
+			config.Targets[android.Android] = []android.Target{
+				{Os: android.Android, Arch: android.Arch{ArchType: android.X86_64, ArchVariant: "", Abi: []string{"x86_64"}}},
+				{Os: android.Android, Arch: android.Arch{ArchType: android.Arm64, ArchVariant: "armv8-a", Abi: []string{"arm64-v8a"}}, NativeBridge: android.NativeBridgeEnabled},
+			}
+		}),
+	)
+
+	m := ctx.ModuleForTests("myapex.apex.extractor", "android_common")
+
+	// Check extract_apks tool parameters. No native bridge arch expected
+	extractedApex := m.Output("extracted/myapex.apks")
+	android.AssertStringEquals(t, "abis", "X86_64", extractedApex.Args["abis"])
 }
 
 func TestNoStaticLinkingToStubsLib(t *testing.T) {

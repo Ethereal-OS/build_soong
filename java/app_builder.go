@@ -222,14 +222,8 @@ func BuildBundleModule(ctx android.ModuleContext, outputFile android.WritablePat
 	})
 }
 
-const jniJarOutputPathString = "jniJarOutput.zip"
-
-func TransformJniLibsToJar(
-	ctx android.ModuleContext,
-	outputFile android.WritablePath,
-	jniLibs []jniLib,
-	prebuiltJniPackages android.Paths,
-	uncompressJNI bool) {
+func TransformJniLibsToJar(ctx android.ModuleContext, outputFile android.WritablePath,
+	jniLibs []jniLib, uncompressJNI bool) {
 
 	var deps android.Paths
 	jarArgs := []string{
@@ -255,19 +249,12 @@ func TransformJniLibsToJar(
 		rule = zipRE
 		args["implicits"] = strings.Join(deps.Strings(), ",")
 	}
-	jniJarPath := android.PathForModuleOut(ctx, jniJarOutputPathString)
 	ctx.Build(pctx, android.BuildParams{
 		Rule:        rule,
 		Description: "zip jni libs",
-		Output:      jniJarPath,
+		Output:      outputFile,
 		Implicits:   deps,
 		Args:        args,
-	})
-	ctx.Build(pctx, android.BuildParams{
-		Rule:        mergeAssetsRule,
-		Description: "merge prebuilt JNI packages",
-		Inputs:      append(prebuiltJniPackages, jniJarPath),
-		Output:      outputFile,
 	})
 }
 

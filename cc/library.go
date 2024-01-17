@@ -523,7 +523,7 @@ func (f *flagExporter) exportIncludes(ctx ModuleContext) {
 }
 
 func (f *flagExporter) exportExtraFlags(ctx ModuleContext) {
-	f.flags = append(f.flags, f.Properties.Export_cflags...)
+        f.flags = append(f.flags, f.Properties.Export_cflags...)
 }
 
 // exportIncludesAsSystem registers the include directories and system include directories to be
@@ -961,6 +961,16 @@ func (library *libraryDecorator) linkerFlags(ctx ModuleContext, flags Flags) Fla
 // per-target values, module type values, per-module Blueprints properties, extra flags from
 // `flags`, and generated sources from `deps`.
 func (library *libraryDecorator) compilerFlags(ctx ModuleContext, flags Flags, deps PathDeps) Flags {
+	additionalIncludeDirs := ctx.DeviceConfig().TargetSpecificHeaderPath()
+	if len(additionalIncludeDirs) > 0 {
+		// devices can have multiple paths in TARGET_SPECIFIC_HEADER_PATH
+		// add -I in front of all of them
+		if (strings.Contains(additionalIncludeDirs, " ")) {
+			additionalIncludeDirs = strings.ReplaceAll(additionalIncludeDirs, " ", " -I")
+		}
+		flags.Local.CommonFlags = append(flags.Local.CommonFlags, "-I" + additionalIncludeDirs)
+	}
+
 	exportIncludeDirs := library.flagExporter.exportedIncludes(ctx)
 	if len(exportIncludeDirs) > 0 {
 		f := includeDirsToFlags(exportIncludeDirs)
